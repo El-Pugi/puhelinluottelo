@@ -2,11 +2,11 @@ const mongoose = require('mongoose')
 
 mongoose.set('strictQuery', false)
 
-const url = process.env.MONGODB_URI // Yhteysosoite ympäristömuuttujasta
+const url = process.env.MONGODB_URI 
 
 console.log('connecting to', url)
 mongoose.connect(url)
-  .then(result => {
+  .then(() => {
     console.log('connected to MongoDB')
   })
   .catch((error) => {
@@ -14,16 +14,29 @@ mongoose.connect(url)
   })
 
 const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
+  name: {
+    type: String,
+    minlength: [3, 'Path (`{VALUE}`) is shorter than the minimum allowed length (3)'],
+    required: [true, 'Name is required']
+  },
+  number: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        return /^\d{2,3}-\d{5,}$/.test(v)  
+      },
+      message: props => `${props.value} is not a valid phone number!`
+    },
+    required: [true, 'Phone number is required']
+  }
 })
 
-// Muotoillaan JSON-muotoiset palautukset
+
 personSchema.set('toJSON', {
   transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString() // Muutetaan _id merkkijonoksi ja korvataan id:llä
-    delete returnedObject._id // Poistetaan _id
-    delete returnedObject.__v // Poistetaan versiointikenttä
+    returnedObject.id = returnedObject._id.toString() 
+    delete returnedObject._id
+    delete returnedObject.__v
   }
 })
 
